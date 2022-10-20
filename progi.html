@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <title>Bid Calculation</title>
+</head>
+    <body>
+        <div class="main--section">
+            <section class="main--box">
+                <h1>Bid Calculation</h1>
+                <div class="l-field--wrapper">
+                    <label>Budget:</label>
+                    <input class="input--inline" onfocus="this.value=''" type="number" min="0" name="budget"
+                           placeholder="Budget" value="" autocomplete="nofill"/>
+                    <button type="submit" class="button--main" onclick="calculationAmount(this)">Calculate</button>
+                </div>
+                <div class="l-field--wrapper">
+                    <span>Maximum vehicle amount:</span>
+                    <span name="maximum-amount"></span>
+                </div>
+                <div class="l-field--wrapper">
+                    <span>Basic fee:</span>
+                    <span name="basic-fee"></span>
+                </div>
+                <div class="l-field--wrapper">
+                    <span>Special fee:</span>
+                    <span name="special-fee"></span>
+                </div>
+                <div class="l-field--wrapper">
+                    <span>Association fee:</span>
+                    <span name="association-fee"></span>
+                </div>
+                <div class="l-field--wrapper">
+                    <span>Storage fee:</span>
+                    <span name="storage-fee"></span>
+                </div>
+                <button class="button--main" onclick="configuration()">Show/Hide configuration</button>
+            </section>
+            <section class="main--box configuration">
+                <h2>Fees</h2>
+                <div class="l-field--wrapper">
+                    <h3>Storage</h3>
+                    <label>$</label>
+                    <input class="input--config" onfocus="this.value=''" type="number" min="0" name="storage-input"
+                           value="100" autocomplete="nofill"/>
+                </div>
+                <div class="l-field--wrapper">
+                    <h3>Basic</h3>
+                    <label>Min $</label>
+                    <input class="input--config" onfocus="this.value=''" type="number" min="0" name="basic-min-fee-input"
+                           value="10" autocomplete="nofill"/>
+                    <label>Basic %</label>
+                    <input class="input--config" onfocus="this.value=''" type="number" min="0" name="basic-fee-input"
+                           value="10" autocomplete="nofill"/>
+                    <label>Max $</label>
+                    <input class="input--config" onfocus="this.value=''" type="number" min="0" name="basic-max-fee-input"
+                           value="50" autocomplete="nofill"/>
+                </div>
+                <div class="l-field--wrapper">
+                    <h3>Special Fee</h3>
+                    <label>%</label>
+                    <input class="input--config" onfocus="this.value=''" type="number" min="0" name="special-fee-input"
+                           value="2" autocomplete="nofill"/>
+                </div>
+                <div class="l-field--wrapper">
+                    <h3>Association Fee</h3>
+                    <div class="l-field--wrapper">
+                        <label>Amount between $1 and & $500 $</label>
+                        <input class="input--config" onfocus="this.value=''" type="number" min="0" name="asso-fee-input-min"
+                               value="5" autocomplete="nofill"/>
+                    </div>
+                    <div class="l-field--wrapper">
+                        <label>Amount greater than $500 up to $1000 $</label>
+                        <input class="input--config" onfocus="this.value=''" type="number" min="0"
+                               name="asso-fee-input-min-middle" value="10" autocomplete="nofill"/>
+                    </div>
+                    <div class="l-field--wrapper">
+                        <label>Amount greater than $1000 up to $3000 $</label>
+                        <input class="input--config" onfocus="this.value=''" type="number" min="0"
+                               name="asso-fee-input-max-middle" value="15" autocomplete="nofill"/>
+                    </div>
+                    <div class="l-field--wrapper">
+                        <label>Amount over $3000 $</label>
+                        <input class="input--config" onfocus="this.value=''" type="number" min="0" name="asso-fee-input-max"
+                               value="20" autocomplete="nofill"/>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </body>
+</html>
+
+<script>
+
+  /**
+   * Function for show or hide the configuration options
+   */
+  function configuration() {
+    if (!$('.configuration').is(':visible')) {
+      $('.configuration').show();
+    } else {
+      $('.configuration').hide();
+    }
+
+  }
+
+  /**
+   * Function to calculate the maximum value that he or she can bid on a car with a given budget
+   * @param $this the value of budget provide by the user.
+   */
+  function calculationAmount($this) {
+    let maximumAmount;
+    let basicFee        = 0;
+    let specialFee      = 0;
+    let associationFee  = 0;
+    let storageFee      = parseFloat(storageFeeCalculation());
+    let totalAmount     = 0;
+    let count           = 0;
+    let budget          = $this.previousElementSibling.value;
+
+    // Calculate the default values
+    totalAmount = budget - storageFee;
+    associationFee = associationFeeCalculation(totalAmount);
+    totalAmount = totalAmount - associationFee;
+    basicFee = basicFeeCalculation(totalAmount);
+    totalAmount = totalAmount - basicFee;
+    specialFee = specialFeeCalculation(totalAmount);
+    totalAmount = totalAmount - specialFee;
+
+    do {
+
+      // Recalculation of values if is necessary
+      associationFee = associationFeeCalculation(totalAmount);
+      basicFee = basicFeeCalculation(totalAmount);
+      specialFee = specialFeeCalculation(totalAmount);
+
+      maximumAmount = associationFee + basicFee + specialFee + storageFee + totalAmount;
+
+      if (maximumAmount != budget) {
+        totalAmount = (totalAmount + ((budget - maximumAmount) / 2));
+      }
+
+      // Security control section
+      if (count == 10000) {
+        console.log('An error has occurred');
+        break;
+      }
+      count++;
+
+    } while (maximumAmount != budget);
+
+    // If the amount isn't enough we set the values
+    if (totalAmount <= 0) {
+      totalAmount       = 0.00;
+      basicFee          = 0.00;
+      specialFee        = 0.00;
+      associationFee    = 0.00;
+      storageFee        = 0.00;
+    }
+
+    // Print the values on the screen
+    $('[name="maximum-amount"]').text(totalAmount.toFixed(2));
+    $('[name="basic-fee"]').text(basicFee.toFixed(2));
+    $('[name="special-fee"]').text(specialFee.toFixed(2));
+    $('[name="association-fee"]').text(associationFee.toFixed(2));
+    $('[name="storage-fee"]').text(storageFee.toFixed(2));
+  }
+
+  /**
+   * Function for calculate the basic fee
+   * @param valueBasic with the value of the current amount
+   * @returns {number} with the basic fee amount
+   */
+  function basicFeeCalculation(valueBasic) {
+    let minBasicFee     = parseFloat($('[name="basic-min-fee-input"]').val());
+    let maxBasicFee     = parseFloat($('[name="basic-max-fee-input"]').val());
+    let basicFee        = parseFloat($('[name="basic-fee-input"]').val());
+    let finalBasicFee   = 0.00;
+
+    finalBasicFee = valueBasic * (basicFee / 100);
+    if (finalBasicFee > maxBasicFee) finalBasicFee = maxBasicFee;
+    if (finalBasicFee < minBasicFee) finalBasicFee = minBasicFee;
+
+    return finalBasicFee;
+  }
+
+  /**
+   * Function for calculate the storage fee
+   * @returns {number} with the storage fee amount
+   */
+  function storageFeeCalculation() {
+    let storageFee  = parseFloat($('[name="storage-input"]').val());
+    return storageFee;
+  }
+
+  /**
+   * Function for calculate the special fee
+   * @param valueSpecial with the value of the current amount
+   * @returns {number} with the special fee amount
+   */
+  function specialFeeCalculation(valueSpecial) {
+    let specialFee  = parseFloat($('[name="special-fee-input"]').val());
+    return valueSpecial * (specialFee / 100);
+  }
+
+  /**
+   * Function for calculate the association fee
+   * @param valueAssociation with the value of the current amount
+   * @returns {number} with the association fee amount
+   */
+  function associationFeeCalculation(valueAssociation) {
+    let assoValue1 = parseFloat($('[name="asso-fee-input-min"]').val());
+    let assoValue2 = parseFloat($('[name="asso-fee-input-min-middle"]').val());
+    let assoValue3 = parseFloat($('[name="asso-fee-input-max-middle"]').val());
+    let assoValue4 = parseFloat($('[name="asso-fee-input-max"]').val());
+
+    if (valueAssociation >= 1 && valueAssociation <= 500) return assoValue1;
+    else if (valueAssociation > 500 && valueAssociation <= 1000) return assoValue2;
+    else if (valueAssociation > 1000 && valueAssociation <= 3000) return assoValue3;
+    else if (valueAssociation > 3000) return assoValue4;
+    else return 0.00;
+  }
+
+
+</script>
+
+<style>
+    .input--inline {
+        -webkit-appearance: none;
+        margin: 0;
+        width: 100px;
+        padding: 4px 12px;
+    }
+
+    .l-field--wrapper {
+        padding: 8px 12px;
+        margin: auto;
+    }
+
+    .main--section {
+        margin: auto;
+    }
+
+    .input--config {
+        width: 60px;
+        -webkit-appearance: none;
+        padding: 2px;
+    }
+
+    .main--box {
+        padding: 16px;
+    }
+
+    .configuration {
+        display: none;
+    }
+
+    .button--main {
+        padding: 4px 12px;
+        margin: 8px;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        text-decoration: none;
+        font-family: 'Poppins', sans-serif;
+        -webkit-print-color-adjust: exact !important; /*Chrome, Safari */
+        color-adjust: exact !important; /*Firefox*/
+    }
+
+</style>
