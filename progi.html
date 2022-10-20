@@ -137,10 +137,7 @@
       specialFee = specialFeeCalculation(totalAmount);
 
       maximumAmount = associationFee + basicFee + specialFee + storageFee + totalAmount;
-
-      if (maximumAmount != budget) {
-        totalAmount = (totalAmount + ((budget - maximumAmount) / 2));
-      }
+      totalAmount = (totalAmount + ((budget - maximumAmount) / 2));
 
       // Security control section
       if (count == 10000) {
